@@ -125,38 +125,6 @@ body {
   cursor: pointer;
 }
 
-.color-picker-chip {
-  display: inline-flex;
-  align-items: center;
-  gap: 6px;
-  padding: 4px 10px;
-  border-radius: 999px;
-  border: 1px dashed #4b5563;
-  font-size: 12px;
-  color: #e5e7eb;
-  cursor: pointer;
-  margin-left: 6px;
-}
-
-.color-picker-chip input[type='color'] {
-  -webkit-appearance: none;
-  border: none;
-  padding: 0;
-  width: 18px;
-  height: 18px;
-  border-radius: 999px;
-  background: transparent;
-}
-
-.color-picker-chip input[type='color']::-webkit-color-swatch {
-  border-radius: 999px;
-  border: 1px solid #111827;
-}
-
-.color-picker-chip input[type='color']::-webkit-color-swatch-wrapper {
-  padding: 0;
-}
-
 /* 아바타 */
 
 .avatar-wrapper {
@@ -167,72 +135,41 @@ body {
   margin-bottom: 12px;
   border-radius: 24px;
   overflow: hidden;
-  background: radial-gradient(circle at top, #4b5563, #020617);
+  background: radial-gradient(circle at top, #1f2937, #020617);
   border: 1px solid #262a33;
-  display: flex;
-  justify-content: center;
-  align-items: flex-end;
 }
 
-.avatar-body {
-  width: 120px;
-  height: 280px;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
+.avatar-base {
+  position: absolute;
+  inset: 0;
+  opacity: 0.2;
 }
 
-.avatar-head {
-  width: 70px;
-  height: 70px;
+/* 단순화된 사람형 박스 (상의/하의/신발) */
+
+.avatar-top,
+.avatar-bottom,
+.avatar-shoes {
+  position: absolute;
+  left: 40px;
+  right: 40px;
+  border-radius: 16px;
+}
+
+.avatar-top {
+  top: 60px;
+  height: 110px;
+}
+
+.avatar-bottom {
+  top: 170px;
+  height: 120px;
+}
+
+.avatar-shoes {
+  top: 295px;
+  height: 40px;
   border-radius: 999px;
-  background: #e5e7eb;
-  box-shadow: 0 4px 10px rgba(0, 0, 0, 0.45);
-  margin-bottom: 4px;
-}
-
-.avatar-neck {
-  width: 26px;
-  height: 10px;
-  border-radius: 999px;
-  background: #e5e7eb;
-  margin-bottom: 6px;
-}
-
-.avatar-torso {
-  width: 90px;
-  height: 90px;
-  border-radius: 28px 28px 20px 20px;
-  box-shadow: 0 8px 16px rgba(0, 0, 0, 0.5);
-  border: 1px solid rgba(255, 255, 255, 0.05);
-}
-
-.avatar-legs {
-  margin-top: 8px;
-  display: flex;
-  gap: 8px;
-}
-
-.avatar-leg {
-  width: 36px;
-  height: 80px;
-  border-radius: 18px;
-  box-shadow: 0 6px 12px rgba(0, 0, 0, 0.5);
-  border: 1px solid rgba(255, 255, 255, 0.05);
-}
-
-.avatar-shoes-row {
-  margin-top: 10px;
-  display: flex;
-  gap: 10px;
-}
-
-.avatar-shoe {
-  width: 40px;
-  height: 22px;
-  border-radius: 999px;
-  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.6);
-  border: 1px solid rgba(255, 255, 255, 0.05);
 }
 
 .code-row {
@@ -311,41 +248,20 @@ body {
   font-size: 13px;
 }
 
-.ai-panel {
-  display: flex;
-  flex-direction: column;
-  height: 420px;
-}
-
 .chat-history {
-  flex: 1;
   margin-top: 8px;
-  max-height: none;
+  max-height: 360px;
   overflow-y: auto;
   padding-right: 4px;
-  border-radius: 12px;
-  background: #020617;
-  border: 1px solid #262a33;
-  padding: 8px 10px;
-}
-
-.chat-turn {
-  margin-bottom: 10px;
-}
-
-.chat-input-area {
-  margin-top: 8px;
-}
-
-.chat-buttons {
-  display: flex;
-  gap: 8px;
-  margin-top: 4px;
 }
 
 .empty-hint {
   font-size: 13px;
   color: #9ca3af;
+}
+
+.chat-turn {
+  margin-bottom: 10px;
 }
 
 .chat-bubble {
@@ -381,4 +297,33 @@ body {
   font-size: 13px;
   padding: 6px 12px;
   cursor: pointer;
+}
+
+.auth-form {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  margin-top: 8px;
+}
+
+.auth-label {
+  font-size: 13px;
+  color: #e5e7eb;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.auth-input {
+  border-radius: 999px;
+  border: 1px solid #374151;
+  background: #020617;
+  color: #e5e7eb;
+  padding: 8px 14px;
+  font-size: 13px;
+}
+
+.auth-error {
+  font-size: 12px;
+  color: #f97373;
 }

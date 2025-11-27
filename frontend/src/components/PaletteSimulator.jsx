@@ -1,281 +1,482 @@
-import { useEffect, useState } from 'react';
-import axios from 'axios';
+// src/components/PaletteSimulator.jsx
+import React, { useEffect, useState } from "react";
+import axios from "axios";
 
-const MOODS = [
-  { id: 'minimal', label: 'Minimal' },
-  { id: 'street', label: 'Street' },
-  { id: 'casual', label: 'Casual' },
-];
+const MOODS = ["minimal", "street", "casual"];
 
-const EXTENDED_PALETTES = {
-  minimal: [
-    '#ffffff',
-    '#000000',
-    '#f5f5f5',
-    '#e5e7eb',
-    '#d4d4d8',
-    '#a3a3a3',
-    '#52525b',
-    '#0f172a',
-  ],
-  street: [
-    '#000000',
-    '#f97316',
-    '#facc15',
-    '#22c55e',
-    '#3b82f6',
-    '#ef4444',
-    '#a855f7',
-    '#eab308',
-  ],
-  casual: [
-    '#f97316',
-    '#fbbf24',
-    '#34d399',
-    '#38bdf8',
-    '#a855f7',
-    '#f472b6',
-    '#64748b',
-    '#0f172a',
-  ],
+const PALETTES = {
+  minimal: ["#ffffff", "#000000", "#f5f5f5", "#d1d5db", "#4b5563"],
+  street: ["#111827", "#ef4444", "#f59e0b", "#3b82f6", "#22c55e"],
+  casual: ["#f97316", "#fb7185", "#22c55e", "#3b82f6", "#a855f7"],
 };
 
-function PaletteSimulator() {
-  const [mood, setMood] = useState('minimal');
-  const [palette, setPalette] = useState([]);
-  const [selectedPart, setSelectedPart] = useState('top'); // top | bottom | shoes
+function moodLabel(m) {
+  if (m === "minimal") return "Minimal";
+  if (m === "street") return "Street";
+  if (m === "casual") return "Casual";
+  return m;
+}
 
-  const [topColor, setTopColor] = useState('#FFFFFF');
-  const [bottomColor, setBottomColor] = useState('#000000');
-  const [shoesColor, setShoesColor] = useState('#CCCCCC');
-  const [customColor, setCustomColor] = useState('#ffffff');
-  const [savedOutfits, setSavedOutfits] = useState([]);
-  const [outfitName, setOutfitName] = useState('');
+export default function PaletteSimulator({
+  apiBase,
+  token,
+  onGoWardrobe,
+  mood = "minimal",
+  setMood = () => {},
+  topColor = "#ffffff",
+  setTopColor = () => {},
+  bottomColor = "#000000",
+  setBottomColor = () => {},
+  shoesColor = "#f5f5f5",
+  setShoesColor = () => {},
+}) {
+  const [part, setPart] = useState("top"); // top | bottom | shoes
 
+  const [customColor, setCustomColor] = useState("#ff5733");
+
+  const [outfitName, setOutfitName] = useState("");
+  const [saving, setSaving] = useState(false);
+  const [saveMessage, setSaveMessage] = useState("");
+  const [favoriteOutfits, setFavoriteOutfits] = useState([]);
+
+  const normalizedMood = mood || "minimal";
+  const colors = PALETTES[normalizedMood] || PALETTES.minimal;
   useEffect(() => {
-    async function fetchPalette() {
+    if (!token) {
+      setFavoriteOutfits([]);
+      return;
+    }
+    let cancelled = false;
+    const loadFavorites = async () => {
       try {
-        const res = await axios.get(`http://localhost:4000/palette?mood=${mood}`);
-        const serverColors = res.data.palette || [];
-        const extended = EXTENDED_PALETTES[mood] || [];
-        const merged = Array.from(new Set([...serverColors, ...extended]));
-        setPalette(merged);
-
-        // 기본값 세팅
-        if (colors.length >= 3) {
-          setTopColor(colors[0]);
-          setBottomColor(colors[1]);
-          setShoesColor(colors[2]);
+        const res = await axios.get(`${apiBase}/outfits`, {
+          headers: { Authorization: `Bearer ${token}` },
+        });
+        if (!cancelled) {
+          const favs = (res.data || [])
+            .filter((o) => o.isFavorite)
+            .map((o) => ({ id: o.id, name: o.name }))
+            .slice(0, 5);
+          setFavoriteOutfits(favs);
         }
       } catch (err) {
-        console.error(err);
-      }
-    }
-
-    fetchPalette();
-  }, [mood]);
-
-  useEffect(() => {
-    const fetchOutfits = async () => {
-      try {
-        const res = await axios.get('http://localhost:4000/outfits');
-        setSavedOutfits(res.data);
-      } catch (err) {
-        console.error('Failed to load outfits', err);
+        console.error("즐겨찾기 목록을 불러오지 못했습니다:", err);
       }
     };
-    fetchOutfits();
-  }, []);
+    loadFavorites();
+    const handler = () => loadFavorites();
+    window.addEventListener("colorme:favoritesUpdated", handler);
+    return () => {
+      cancelled = true;
+      window.removeEventListener("colorme:favoritesUpdated", handler);
+    };
+  }, [apiBase, token]);
 
   const handleColorClick = (color) => {
-    if (selectedPart === 'top') setTopColor(color);
-    if (selectedPart === 'bottom') setBottomColor(color);
-    if (selectedPart === 'shoes') setShoesColor(color);
+    if (part === "top") setTopColor(color);
+    if (part === "bottom") setBottomColor(color);
+    if (part === "shoes") setShoesColor(color);
+  };
+
+  const handleCustomPick = (e) => {
+    const color = e.target.value;
+    setCustomColor(color);
+    handleColorClick(color);
   };
 
   const handleSaveOutfit = async () => {
-    const trimmed = outfitName.trim();
-    if (!trimmed) {
-      alert('코디 이름을 입력해주세요. 예: 데이트룩, 클럽룩');
+    const name = outfitName.trim();
+    if (!name) {
+      setSaveMessage("코디 이름을 입력해 주세요.");
+      return;
+    }
+    if (!token) {
+      setSaveMessage("코디를 저장하려면 먼저 로그인해야 합니다.");
       return;
     }
 
     try {
-      const res = await axios.post('http://localhost:4000/outfits', {
-        name: trimmed,
-        topColor,
-        bottomColor,
-        shoesColor,
-      });
-      setSavedOutfits((prev) => [...prev, res.data]);
-      setOutfitName('');
-    } catch (err) {
-      console.error('Failed to save outfit', err);
-      alert('코디 저장 중 오류가 발생했습니다.');
-    }
-  };
+      setSaving(true);
+      setSaveMessage("");
 
-  const handleApplyOutfit = (outfit) => {
-    setTopColor(outfit.topColor);
-    setBottomColor(outfit.bottomColor);
-    setShoesColor(outfit.shoesColor);
-  };
+      await axios.post(
+        `${apiBase}/outfits`,
+        {
+          name,
+          mood: normalizedMood,
+          topColor,
+          bottomColor,
+          shoesColor,
+        },
+        {
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
+        }
+      );
 
-  const handleDeleteOutfit = async (id) => {
-    if (!window.confirm('이 코디를 삭제할까요?')) return;
-    try {
-      await axios.delete(`http://localhost:4000/outfits/${id}`);
-      setSavedOutfits((prev) => prev.filter((o) => o.id !== id));
+      setSaveMessage("코디가 ‘내 옷장’에 저장되었습니다.");
+      setOutfitName("");
     } catch (err) {
-      console.error('Failed to delete outfit', err);
-      alert('삭제 중 오류가 발생했습니다.');
+      console.error(err);
+      setSaveMessage("저장 중 오류가 발생했습니다. 잠시 후 다시 시도해 주세요.");
+    } finally {
+      setSaving(false);
     }
   };
 
   return (
-    <section className="panel">
-      <h2>오늘의 무드 기반 색조합 시뮬레이터</h2>
+    <div
+      id="palette-simulator"
+      style={{
+        borderRadius: 24,
+        padding: 24,
+        background: "rgba(15,23,42,0.9)",
+        border: "1px solid rgba(51,65,85,0.9)",
+        maxWidth: 960,
+        margin: "0 auto",
+      }}
+    >
+      <h2 style={{ fontSize: 24, fontWeight: 800, marginBottom: 16 }}>
+        오늘의 무드 기반 색조합 시뮬레이터
+      </h2>
 
       {/* 무드 선택 */}
-      <div className="mood-row">
-        <span className="label">Mood</span>
+      <div style={{ display: "flex", gap: 8, marginBottom: 12 }}>
         {MOODS.map((m) => (
           <button
-            key={m.id}
-            className={`pill ${mood === m.id ? 'pill-active' : ''}`}
-            onClick={() => setMood(m.id)}
+            key={m}
+            onClick={() => setMood(m)}
+            style={{
+              padding: "8px 20px",
+              borderRadius: 999,
+              border: "none",
+              fontSize: 14,
+              cursor: "pointer",
+              background:
+                normalizedMood === m ? "rgb(34,197,94)" : "rgba(15,23,42,1)",
+              color:
+                normalizedMood === m ? "#0b1120" : "rgb(209,213,219)",
+            }}
           >
-            {m.label}
+            {moodLabel(m)}
           </button>
         ))}
       </div>
 
-      {/* 파츠 선택 */}
-      <div className="part-row">
-        <span className="label">부분 선택</span>
-        <button
-          className={`pill ${selectedPart === 'top' ? 'pill-active' : ''}`}
-          onClick={() => setSelectedPart('top')}
-        >
-          상의
-        </button>
-        <button
-          className={`pill ${selectedPart === 'bottom' ? 'pill-active' : ''}`}
-          onClick={() => setSelectedPart('bottom')}
-        >
-          하의
-        </button>
-        <button
-          className={`pill ${selectedPart === 'shoes' ? 'pill-active' : ''}`}
-          onClick={() => setSelectedPart('shoes')}
-        >
-          신발
-        </button>
+      {/* 부위 선택 */}
+      <div style={{ display: "flex", gap: 8, marginBottom: 12 }}>
+        {[
+          { key: "top", label: "상의" },
+          { key: "bottom", label: "하의" },
+          { key: "shoes", label: "신발" },
+        ].map((p) => (
+          <button
+            key={p.key}
+            onClick={() => setPart(p.key)}
+            style={{
+              padding: "6px 16px",
+              borderRadius: 999,
+              border: "none",
+              fontSize: 13,
+              cursor: "pointer",
+              background:
+                part === p.key ? "rgb(34,197,94)" : "rgba(15,23,42,1)",
+              color: part === p.key ? "#0b1120" : "rgb(209,213,219)",
+            }}
+          >
+            {p.label}
+          </button>
+        ))}
       </div>
 
-      {/* 팔레트 */}
-      <div className="palette-row">
-        {palette.map((color) => (
+      {/* 색상 칩 + Custom */}
+      <div
+        style={{
+          display: "flex",
+          alignItems: "center",
+          gap: 12,
+          marginBottom: 24,
+        }}
+      >
+        {colors.map((c) => (
           <button
-            key={color}
-            className="color-chip"
-            style={{ backgroundColor: color }}
-            onClick={() => handleColorClick(color)}
-            title={color}
+            key={c}
+            onClick={() => handleColorClick(c)}
+            style={{
+              width: 40,
+              height: 40,
+              borderRadius: "999px",
+              border:
+                topColor === c || bottomColor === c || shoesColor === c
+                  ? "2px solid white"
+                  : "2px solid transparent",
+              background: c,
+              cursor: "pointer",
+            }}
           />
         ))}
-        <label className="color-picker-chip">
-          <span>Custom</span>
+
+        <div style={{ marginLeft: 16, display: "flex", alignItems: "center" }}>
+          <span
+            style={{
+              fontSize: 13,
+              color: "rgb(156,163,175)",
+              marginRight: 8,
+            }}
+          >
+            Custom
+          </span>
           <input
             type="color"
             value={customColor}
-            onChange={(e) => {
-              const value = e.target.value;
-              setCustomColor(value);
-              handleColorClick(value);
+            onChange={handleCustomPick}
+            style={{
+              width: 40,
+              height: 40,
+              borderRadius: "999px",
+              border: "none",
+              background: "transparent",
+              padding: 0,
+              cursor: "pointer",
             }}
           />
-        </label>
+        </div>
       </div>
 
-      {/* 아바타 영역 */}
-      <div className="avatar-wrapper">
-        <div className="avatar-body">
-          {/* 머리 + 목 (피부색 고정) */}
-          <div className="avatar-head" />
-          <div className="avatar-neck" />
-
-          {/* 상의 – topColor */}
-          <div className="avatar-torso" style={{ backgroundColor: topColor }} />
-
-          {/* 하의 – 바지 두 다리 */}
-          <div className="avatar-legs">
-            <div className="avatar-leg" style={{ backgroundColor: bottomColor }} />
-            <div className="avatar-leg" style={{ backgroundColor: bottomColor }} />
+      {/* 아바타 시뮬레이터 */}
+      <div
+        style={{
+          display: "flex",
+          justifyContent: "flex-start",
+        }}
+      >
+        <div
+          style={{
+            width: 260,
+            height: 480,
+            borderRadius: 40,
+            padding: 32,
+            background: "radial-gradient(circle at top, #1f2937, #020617)",
+            display: "flex",
+            flexDirection: "column",
+            alignItems: "center",
+            justifyContent: "flex-start",
+            gap: 16,
+          }}
+        >
+          <div
+            style={{
+              width: 140,
+              height: 140,
+              borderRadius: "999px",
+              background: "#e5e7eb",
+            }}
+          />
+          <div
+            style={{
+              width: 60,
+              height: 12,
+              borderRadius: 999,
+              background: "#e5e7eb",
+            }}
+          />
+          <div
+            style={{
+              width: 180,
+              height: 160,
+              borderRadius: 40,
+              background: topColor,
+              boxShadow: "0 14px 30px rgba(0,0,0,0.55)",
+            }}
+          />
+          <div
+            style={{
+              display: "flex",
+              gap: 16,
+              marginTop: 4,
+            }}
+          >
+            <div
+              style={{
+                width: 70,
+                height: 130,
+                borderRadius: 40,
+                background: bottomColor,
+              }}
+            />
+            <div
+              style={{
+                width: 70,
+                height: 130,
+                borderRadius: 40,
+                background: bottomColor,
+              }}
+            />
           </div>
-
-          {/* 신발 – 좌/우 두 개 */}
-          <div className="avatar-shoes-row">
-            <div className="avatar-shoe" style={{ backgroundColor: shoesColor }} />
-            <div className="avatar-shoe" style={{ backgroundColor: shoesColor }} />
+          <div
+            style={{
+              display: "flex",
+              gap: 24,
+              marginTop: 8,
+            }}
+          >
+            <div
+              style={{
+                width: 70,
+                height: 32,
+                borderRadius: 999,
+                background: shoesColor,
+              }}
+            />
+            <div
+              style={{
+                width: 70,
+                height: 32,
+                borderRadius: 999,
+                background: shoesColor,
+              }}
+            />
           </div>
         </div>
       </div>
 
-      <p className="current-combo">
-        현재 조합 Top: {topColor} / Bottom: {bottomColor} / Shoes: {shoesColor}
+      {/* 현재 조합 텍스트 */}
+      <p
+        style={{
+          marginTop: 16,
+          fontSize: 13,
+          color: "rgb(156,163,175)",
+        }}
+      >
+        현재 조합 Top: <span style={{ color: "#e5e7eb" }}>{topColor}</span> / Bottom:{" "}
+        <span style={{ color: "#e5e7eb" }}>{bottomColor}</span> / Shoes:{" "}
+        <span style={{ color: "#e5e7eb" }}>{shoesColor}</span>
       </p>
 
-      <div className="save-outfit-row">
-        <input
-          className="save-outfit-input"
-          type="text"
-          placeholder="이 코디 이름 (예: 데이트룩, 클럽룩)"
-          value={outfitName}
-          onChange={(e) => setOutfitName(e.target.value)}
-        />
-        <button className="primary-btn" onClick={handleSaveOutfit}>
-          이 조합 저장
-        </button>
-      </div>
-
-      <div className="saved-outfits">
-        {savedOutfits.length === 0 ? (
-          <p className="saved-empty">아직 저장된 코디가 없습니다.</p>
-        ) : (
-          savedOutfits.map((o) => (
-            <div key={o.id} className="saved-outfit-card">
-              <div className="saved-outfit-header">
-                <span className="saved-outfit-name">{o.name}</span>
-                <span className="saved-outfit-date">
-                  {new Date(o.createdAt).toLocaleDateString()}
-                </span>
-              </div>
-              <div className="saved-outfit-preview">
-                <div className="preview-color top" style={{ backgroundColor: o.topColor }} />
-                <div
-                  className="preview-color bottom"
-                  style={{ backgroundColor: o.bottomColor }}
-                />
-                <div
-                  className="preview-color shoes"
-                  style={{ backgroundColor: o.shoesColor }}
-                />
-              </div>
-              <div className="saved-outfit-actions">
-                <button className="secondary-btn" onClick={() => handleApplyOutfit(o)}>
-                  이 코디 불러오기
+      {/* 즐겨찾기 섹션 */}
+      <div
+        style={{
+          marginTop: 16,
+          borderRadius: 20,
+          border: "1px dashed rgba(51,65,85,0.6)",
+          padding: 16,
+          background: "rgba(2,6,23,0.6)",
+        }}
+      >
+        <div style={{ fontSize: 14, fontWeight: 600, color: "#e5e7eb" }}>
+          즐겨찾는 코디
+        </div>
+        {token ? (
+          favoriteOutfits.length > 0 ? (
+            <div
+              style={{
+                marginTop: 10,
+                display: "flex",
+                gap: 8,
+                flexWrap: "wrap",
+              }}
+            >
+              {favoriteOutfits.map((fav) => (
+                <button
+                  key={fav.id}
+                  onClick={() => onGoWardrobe && onGoWardrobe()}
+                  style={{
+                    padding: "6px 12px",
+                    borderRadius: 999,
+                    border: "1px solid rgba(248,250,252,0.2)",
+                    background: "rgba(15,23,42,0.9)",
+                    color: "#f8fafc",
+                    fontSize: 12,
+                    cursor: "pointer",
+                  }}
+                >
+                  {fav.name}
                 </button>
-                <button className="danger-btn" onClick={() => handleDeleteOutfit(o.id)}>
-                  삭제
-                </button>
-              </div>
+              ))}
             </div>
-          ))
+          ) : (
+            <p style={{ fontSize: 12, color: "rgb(148,163,184)", marginTop: 8 }}>
+              아직 즐겨찾기한 코디가 없습니다. 내 옷장에서 ★ 버튼을 눌러 보세요.
+            </p>
+          )
+        ) : (
+          <p style={{ fontSize: 12, color: "rgb(148,163,184)", marginTop: 8 }}>
+            즐겨찾기를 보려면 로그인해 주세요.
+          </p>
         )}
       </div>
-    </section>
+
+      {/* 코디 저장 영역 */}
+      <div
+        style={{
+          marginTop: 20,
+          paddingTop: 12,
+          borderTop: "1px solid rgba(31,41,55,1)",
+          display: "flex",
+          flexDirection: "column",
+          gap: 8,
+        }}
+      >
+        <div style={{ fontSize: 13, color: "rgb(148,163,184)" }}>
+          이 조합을 이름 붙여서 저장하면, 상단 탭의 <b>내 옷장</b>에서 다시 볼 수
+          있습니다.
+        </div>
+
+        <div
+          style={{
+            display: "flex",
+            gap: 8,
+            alignItems: "center",
+            flexWrap: "wrap",
+          }}
+        >
+          <input
+            type="text"
+            placeholder="예) 데이트룩, 클럽룩, 학교갈 때 룩"
+            value={outfitName}
+            onChange={(e) => setOutfitName(e.target.value)}
+            style={{
+              flex: 1,
+              minWidth: 220,
+              padding: "8px 12px",
+              borderRadius: 999,
+              border: "1px solid rgba(55,65,81,1)",
+              background: "rgba(15,23,42,1)",
+              color: "white",
+              fontSize: 13,
+            }}
+          />
+          <button
+            onClick={handleSaveOutfit}
+            disabled={saving}
+            style={{
+              padding: "9px 18px",
+              borderRadius: 999,
+              border: "none",
+              background: saving ? "rgba(59,130,246,0.6)" : "rgb(59,130,246)",
+              color: "#0b1120",
+              fontSize: 13,
+              fontWeight: 600,
+              cursor: saving ? "default" : "pointer",
+            }}
+          >
+            {saving ? "저장 중..." : "이 조합 저장"}
+          </button>
+        </div>
+
+        {saveMessage && (
+          <div
+            style={{
+              fontSize: 12,
+              color: "rgb(148,163,184)",
+              marginTop: 4,
+            }}
+          >
+            {saveMessage}
+          </div>
+        )}
+      </div>
+    </div>
   );
 }
-
-export default PaletteSimulator;
