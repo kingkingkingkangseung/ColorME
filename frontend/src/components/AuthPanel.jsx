@@ -1,7 +1,10 @@
 import { useState } from 'react';
 import axios from 'axios';
 
-function AuthPanel({ onAuthSuccess, apiBase = 'http://localhost:4000' }) {
+function AuthPanel({
+  onAuthSuccess,
+  apiBase = 'https://colorme-production.up.railway.app',
+}) {
   const [mode, setMode] = useState('login'); // 'login' | 'register'
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');

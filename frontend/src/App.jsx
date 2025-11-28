@@ -13,7 +13,7 @@ import HomeShowcase from "./components/HomeShowcase";
 import ColorGuide from "./components/ColorGuide";
 
 const API_BASE =
-  import.meta.env.VITE_API_BASE || "http://localhost:4000";
+  import.meta.env.VITE_API_BASE || "https://colorme-production.up.railway.app";
 
 function App() {
   const [activeTab, setActiveTab] = useState("home");

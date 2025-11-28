@@ -1,7 +1,7 @@
 import { useEffect, useRef, useState } from 'react';
 import axios from 'axios';
 
-function AiConsult() {
+function AiConsult({ apiBase = 'https://colorme-production.up.railway.app' }) {
   const [question, setQuestion] = useState('');
   const [history, setHistory] = useState([]);
   const [loading, setLoading] = useState(false);
@@ -41,7 +41,7 @@ function AiConsult() {
     setLoading(true);
 
     try {
-      const res = await axios.post('http://localhost:4000/ask-ai', {
+      const res = await axios.post(`${apiBase}/ask-ai`, {
         question: trimmed,
       });
       const answer = res.data.answer || '응답이 비어 있습니다.';

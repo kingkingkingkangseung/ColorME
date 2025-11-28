@@ -27,7 +27,7 @@ function mapOutfitRow(row) {
 // ───────────────────── Middleware ─────────────────────
 app.use(
   cors({
-    origin: 'http://localhost:5173', // Vite React 기본 포트
+    origin: 'https://colorme-eta.vercel.app',
   })
 );
 app.use(express.json({ limit: '15mb' }));
