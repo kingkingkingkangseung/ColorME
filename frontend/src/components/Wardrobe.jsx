@@ -205,30 +205,31 @@ export default function Wardrobe({ apiBase, token }) {
                     display: "flex",
                     flexDirection: "column",
                     alignItems: "center",
-                    gap: 14,
+                    gap: 16,
                   }}
                 >
                   <div
                     style={{
-                      width: 110,
-                      height: 110,
-                      borderRadius: "999px",
-                      background: "#e5e7eb",
+                      width: 120,
+                      height: 120,
+                      borderRadius: "50%",
+                      background: "#f5f5f5",
+                      boxShadow: "0 8px 15px rgba(0,0,0,0.35)",
                     }}
                   />
                   <div
                     style={{
-                      width: 50,
-                      height: 10,
+                      width: 45,
+                      height: 14,
                       borderRadius: 999,
-                      background: "#e5e7eb",
+                      background: "#d1d5db",
                     }}
                   />
                   <div
                     style={{
-                      width: 150,
-                      height: 130,
-                      borderRadius: 34,
+                      width: 140,
+                      height: 170,
+                      borderRadius: "70px 70px 45px 45px",
                       background: o.topColor,
                       boxShadow: "0 12px 24px rgba(0,0,0,0.45)",
                     }}
@@ -236,22 +237,23 @@ export default function Wardrobe({ apiBase, token }) {
                   <div
                     style={{
                       display: "flex",
-                      gap: 14,
+                      gap: 16,
+                      marginTop: -6,
                     }}
                   >
                     <div
                       style={{
-                        width: 58,
-                        height: 110,
-                        borderRadius: 34,
+                        width: 55,
+                        height: 120,
+                        borderRadius: 48,
                         background: o.bottomColor,
                       }}
                     />
                     <div
                       style={{
-                        width: 58,
-                        height: 110,
-                        borderRadius: 34,
+                        width: 55,
+                        height: 120,
+                        borderRadius: 48,
                         background: o.bottomColor,
                       }}
                     />
@@ -259,22 +261,22 @@ export default function Wardrobe({ apiBase, token }) {
                   <div
                     style={{
                       display: "flex",
-                      gap: 18,
+                      gap: 24,
                       marginTop: 6,
                     }}
                   >
                     <div
                       style={{
-                        width: 58,
-                        height: 26,
+                        width: 55,
+                        height: 24,
                         borderRadius: 999,
                         background: o.shoesColor,
                       }}
                     />
                     <div
                       style={{
-                        width: 58,
-                        height: 26,
+                        width: 55,
+                        height: 24,
                         borderRadius: 999,
                         background: o.shoesColor,
                       }}

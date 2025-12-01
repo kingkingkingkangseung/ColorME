@@ -261,78 +261,83 @@ export default function PaletteSimulator({
             display: "flex",
             flexDirection: "column",
             alignItems: "center",
-            justifyContent: "flex-start",
-            gap: 16,
+            gap: 18,
           }}
         >
+          {/* 머리 */}
           <div
             style={{
-              width: 140,
-              height: 140,
-              borderRadius: "999px",
-              background: "#e5e7eb",
+              width: 130,
+              height: 130,
+              borderRadius: "50%",
+              background: "#f5f5f5",
+              boxShadow: "0 8px 15px rgba(0,0,0,0.35)",
             }}
           />
+          {/* 목 */}
           <div
             style={{
-              width: 60,
-              height: 12,
+              width: 50,
+              height: 16,
               borderRadius: 999,
-              background: "#e5e7eb",
+              background: "#d1d5db",
             }}
           />
+          {/* 상체 */}
           <div
             style={{
-              width: 180,
-              height: 160,
-              borderRadius: 40,
+              width: 150,
+              height: 190,
+              borderRadius: "70px 70px 50px 50px",
               background: topColor,
               boxShadow: "0 14px 30px rgba(0,0,0,0.55)",
             }}
           />
+          {/* 하체 */}
           <div
             style={{
               display: "flex",
-              gap: 16,
+              gap: 18,
+              marginTop: -10,
+            }}
+          >
+            <div
+              style={{
+                width: 60,
+                height: 140,
+                borderRadius: 50,
+                background: bottomColor,
+              }}
+            />
+            <div
+              style={{
+                width: 60,
+                height: 140,
+                borderRadius: 50,
+                background: bottomColor,
+              }}
+            />
+          </div>
+          {/* 신발 */}
+          <div
+            style={{
+              display: "flex",
+              gap: 30,
               marginTop: 4,
             }}
           >
             <div
               style={{
-                width: 70,
-                height: 130,
-                borderRadius: 40,
-                background: bottomColor,
-              }}
-            />
-            <div
-              style={{
-                width: 70,
-                height: 130,
-                borderRadius: 40,
-                background: bottomColor,
-              }}
-            />
-          </div>
-          <div
-            style={{
-              display: "flex",
-              gap: 24,
-              marginTop: 8,
-            }}
-          >
-            <div
-              style={{
-                width: 70,
-                height: 32,
+                width: 65,
+                height: 30,
                 borderRadius: 999,
                 background: shoesColor,
               }}
             />
             <div
               style={{
-                width: 70,
-                height: 32,
+                width: 65,
+                height: 30,
                 borderRadius: 999,
                 background: shoesColor,
               }}
