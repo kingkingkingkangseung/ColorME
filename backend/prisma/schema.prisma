@@ -1,0 +1,45 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "mysql"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id           Int      @id @default(autoincrement())
+  email        String   @unique
+  passwordHash String   @map("password_hash")
+  createdAt    DateTime @default(now()) @map("created_at")
+  outfits      Outfit[]
+  profile      Profile?
+
+  @@map("users")
+}
+
+model Outfit {
+  id         Int      @id @default(autoincrement())
+  userId     Int      @map("user_id")
+  name       String
+  topColor   String   @map("top_color")
+  bottomColor String  @map("bottom_color")
+  shoesColor String   @map("shoes_color")
+  isFavorite Boolean  @default(false) @map("is_favorite")
+  createdAt  DateTime @default(now()) @map("created_at")
+  user       User     @relation(fields: [userId], references: [id])
+
+  @@map("outfits")
+}
+
+model Profile {
+  userId      Int      @id @map("user_id")
+  displayName String?  @map("display_name")
+  avatarUrl   String?  @map("avatar_url")
+  heroUrl     String?  @map("hero_url")
+  bio         String?
+  updatedAt   DateTime @default(now()) @updatedAt @map("updated_at")
+  user        User     @relation(fields: [userId], references: [id])
+
+  @@map("profiles")
+}
