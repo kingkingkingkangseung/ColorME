@@ -1,7 +1,7 @@
 // src/components/ProfileBar.jsx
 import React from "react";
 
-export default function ProfileBar({ user, onLogout }) {
+export default function ProfileBar({ user, onLogout, onEditProfile }) {
   if (!user) return null;
 
   const email = user.email || "";
@@ -79,24 +79,42 @@ export default function ProfileBar({ user, onLogout }) {
         오늘의 룩 저장하고, 나만의 팔레트 만드세요 ✨
       </span>
 
-      {/* 로그아웃 버튼 */}
-      <button
-        onClick={onLogout}
-        style={{
-          marginLeft: "auto",
-          padding: "6px 12px",
-          borderRadius: "999px",
-          border: "none",
-          background: "rgba(239,68,68,0.15)",
-          color: "rgb(248,250,252)",
-          fontSize: 12,
-          fontWeight: 600,
-          cursor: "pointer",
-          whiteSpace: "nowrap",
-        }}
-      >
-        로그아웃
-      </button>
+      <div style={{ marginLeft: "auto", display: "flex", gap: 8 }}>
+        {onEditProfile && (
+          <button
+            onClick={onEditProfile}
+            style={{
+              padding: "6px 12px",
+              borderRadius: "999px",
+              border: "1px solid rgba(99,102,241,0.6)",
+              background: "rgba(67,56,202,0.2)",
+              color: "#c7d2fe",
+              fontSize: 12,
+              fontWeight: 600,
+              cursor: "pointer",
+              whiteSpace: "nowrap",
+            }}
+          >
+            프로필 수정
+          </button>
+        )}
+        <button
+          onClick={onLogout}
+          style={{
+            padding: "6px 12px",
+            borderRadius: "999px",
+            border: "none",
+            background: "rgba(239,68,68,0.15)",
+            color: "rgb(248,250,252)",
+            fontSize: 12,
+            fontWeight: 600,
+            cursor: "pointer",
+            whiteSpace: "nowrap",
+          }}
+        >
+          로그아웃
+        </button>
+      </div>
     </div>
   );
 }
