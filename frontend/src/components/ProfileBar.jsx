@@ -1,11 +1,14 @@
 // src/components/ProfileBar.jsx
 import React from "react";
 
-export default function ProfileBar({ user, onLogout, onEditProfile }) {
+export default function ProfileBar({ user, profile, onLogout, onEditProfile }) {
   if (!user) return null;
 
   const email = user.email || "";
-  const nickname = email.split("@")[0];
+  const baseName = email.split("@")[0];
+  const displayName = profile?.displayName?.trim() || baseName;
+  const avatarLetter = displayName[0]?.toUpperCase() || baseName[0]?.toUpperCase() || "U";
+  const avatarUrl = profile?.avatarUrl;
 
   return (
     <div
@@ -21,23 +24,37 @@ export default function ProfileBar({ user, onLogout, onEditProfile }) {
       }}
     >
       {/* 동그란 프로필 아바타 */}
-      <div
-        style={{
-          width: 36,
-          height: 36,
-          borderRadius: "50%",
-          background:
-            "radial-gradient(circle at 0% 0%, #22c55e, #0f172a 70%)",
-          display: "flex",
-          alignItems: "center",
-          justifyContent: "center",
-          fontWeight: 700,
-          color: "white",
-          fontSize: 16,
-        }}
-      >
-        {nickname[0]?.toUpperCase() || "U"}
-      </div>
+      {avatarUrl ? (
+        <img
+          src={avatarUrl}
+          alt="avatar"
+          style={{
+            width: 38,
+            height: 38,
+            borderRadius: "50%",
+            objectFit: "cover",
+            border: "1px solid rgba(255,255,255,0.2)",
+          }}
+        />
+      ) : (
+        <div
+          style={{
+            width: 36,
+            height: 36,
+            borderRadius: "50%",
+            background:
+              "radial-gradient(circle at 0% 0%, #22c55e, #0f172a 70%)",
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "center",
+            fontWeight: 700,
+            color: "white",
+            fontSize: 16,
+          }}
+        >
+          {avatarLetter}
+        </div>
+      )}
 
       {/* 유저 정보 */}
       <div style={{ display: "flex", flexDirection: "column" }}>
@@ -48,7 +65,7 @@ export default function ProfileBar({ user, onLogout, onEditProfile }) {
             color: "rgb(248,250,252)",
           }}
         >
-          {nickname}
+          {displayName}
         </span>
         <span
           style={{
