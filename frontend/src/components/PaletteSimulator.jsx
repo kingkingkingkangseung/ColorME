@@ -267,11 +267,11 @@ export default function PaletteSimulator({
           {/* 머리 */}
           <div
             style={{
-              width: 130,
-              height: 130,
+              width: 150,
+              height: 150,
               borderRadius: "50%",
               background: "#f5f5f5",
-              boxShadow: "0 8px 15px rgba(0,0,0,0.35)",
+              boxShadow: "0 8px 18px rgba(0,0,0,0.35)",
             }}
           />
           {/* 목 */}
@@ -286,11 +286,11 @@ export default function PaletteSimulator({
           {/* 상체 */}
           <div
             style={{
-              width: 150,
-              height: 190,
-              borderRadius: "70px 70px 50px 50px",
+              width: 170,
+              height: 220,
+              borderRadius: "90px 90px 60px 60px",
               background: topColor,
-              boxShadow: "0 14px 30px rgba(0,0,0,0.55)",
+              boxShadow: "0 16px 32px rgba(0,0,0,0.55)",
             }}
           />
           {/* 하체 */}

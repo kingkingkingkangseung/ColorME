@@ -210,11 +210,11 @@ export default function Wardrobe({ apiBase, token }) {
                 >
                   <div
                     style={{
-                      width: 120,
-                      height: 120,
+                      width: 140,
+                      height: 140,
                       borderRadius: "50%",
                       background: "#f5f5f5",
-                      boxShadow: "0 8px 15px rgba(0,0,0,0.35)",
+                      boxShadow: "0 8px 18px rgba(0,0,0,0.35)",
                     }}
                   />
                   <div
@@ -227,11 +227,11 @@ export default function Wardrobe({ apiBase, token }) {
                   />
                   <div
                     style={{
-                      width: 140,
-                      height: 170,
-                      borderRadius: "70px 70px 45px 45px",
+                      width: 160,
+                      height: 200,
+                      borderRadius: "85px 85px 55px 55px",
                       background: o.topColor,
-                      boxShadow: "0 12px 24px rgba(0,0,0,0.45)",
+                      boxShadow: "0 14px 28px rgba(0,0,0,0.45)",
                     }}
                   />
                   <div
