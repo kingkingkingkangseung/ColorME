@@ -24,6 +24,48 @@ function mapOutfitRow(row) {
   };
 }
 
+function presentProfile(profile, user) {
+  const email = user?.email || '';
+  return {
+    displayName: profile?.displayName || email.split('@')[0] || 'User',
+    avatarUrl: profile?.avatarUrl || '',
+    heroUrl: profile?.heroUrl || '',
+    bio: profile?.bio || '',
+    isPublic: profile?.isPublic ?? true,
+  };
+}
+
+function mapPost(post, currentUserId) {
+  const rawImages = post.imageUrls ? JSON.parse(post.imageUrls) : [];
+  return {
+    id: post.id,
+    title: post.title,
+    content: post.content || '',
+    imageUrls: rawImages,
+    createdAt: post.createdAt,
+    updatedAt: post.updatedAt,
+    author: {
+      id: post.user.id,
+      email: post.user.email,
+      profile: presentProfile(post.user.profile, post.user),
+    },
+    likes: post.likes.length,
+    isLiked: !!post.likes.find((like) => like.userId === currentUserId),
+    comments: post.comments
+      .sort((a, b) => a.createdAt - b.createdAt)
+      .map((comment) => ({
+        id: comment.id,
+        content: comment.content,
+        createdAt: comment.createdAt,
+        author: {
+          id: comment.user.id,
+          email: comment.user.email,
+          profile: presentProfile(comment.user.profile, comment.user),
+        },
+      })),
+  };
+}
+
 // ───────────────────── Middleware ─────────────────────
 app.use(
   cors({
@@ -57,6 +99,20 @@ function authRequired(req, res, next) {
     console.error('JWT verify error:', err);
     return res.status(401).json({ error: '토큰이 유효하지 않습니다.' });
   }
+}
+
+function authOptional(req, res, next) {
+  const auth = req.header('Authorization') || '';
+  if (auth.startsWith('Bearer ')) {
+    const token = auth.slice(7);
+    try {
+      const payload = jwt.verify(token, JWT_SECRET);
+      req.user = payload;
+    } catch (err) {
+      // ignore invalid token
+    }
+  }
+  next();
 }
 
 // ───────────────────── OpenAI 설정 (AI 코디 컨설턴트) ─────────────────────
@@ -140,12 +196,8 @@ app.get('/profile', authRequired, async (req, res) => {
   const userId = req.user.id;
   try {
     const profile = await prisma.profile.findUnique({ where: { userId } });
-    res.json({
-      displayName: profile?.displayName || '',
-      avatarUrl: profile?.avatarUrl || '',
-      heroUrl: profile?.heroUrl || '',
-      bio: profile?.bio || '',
-    });
+    const currentUser = await prisma.user.findUnique({ where: { id: userId } });
+    res.json(presentProfile(profile, currentUser));
   } catch (err) {
     console.error('Get profile error:', err);
     res.status(500).json({ error: '프로필을 불러오지 못했습니다.' });
@@ -154,22 +206,146 @@ app.get('/profile', authRequired, async (req, res) => {
 
 app.put('/profile', authRequired, async (req, res) => {
   const userId = req.user.id;
-  const { displayName = '', avatarUrl = '', heroUrl = '', bio = '' } = req.body || {};
+  const { displayName = '', avatarUrl = '', heroUrl = '', bio = '', isPublic = true } = req.body || {};
   try {
     const saved = await prisma.profile.upsert({
       where: { userId },
-      update: { displayName, avatarUrl, heroUrl, bio },
-      create: { userId, displayName, avatarUrl, heroUrl, bio },
+      update: { displayName, avatarUrl, heroUrl, bio, isPublic },
+      create: { userId, displayName, avatarUrl, heroUrl, bio, isPublic },
     });
-    res.json({
-      displayName: saved.displayName || '',
-      avatarUrl: saved.avatarUrl || '',
-      heroUrl: saved.heroUrl || '',
-      bio: saved.bio || '',
-    });
+    const currentUser = await prisma.user.findUnique({ where: { id: userId } });
+    res.json(presentProfile(saved, currentUser));
   } catch (err) {
     console.error('Save profile error:', err);
     res.status(500).json({ error: '프로필 저장 중 오류가 발생했습니다.' });
+  }
+});
+
+// ───────────────────── 커뮤니티 API ─────────────────────
+app.get('/community/posts', authOptional, async (req, res) => {
+  try {
+    const posts = await prisma.post.findMany({
+      orderBy: { createdAt: 'desc' },
+      take: 50,
+      include: {
+        user: { include: { profile: true } },
+        likes: true,
+        comments: {
+          include: { user: { include: { profile: true } } },
+        },
+      },
+    });
+    const currentUserId = req.user?.id || null;
+    res.json(posts.map((post) => mapPost(post, currentUserId)));
+  } catch (err) {
+    console.error('Fetch posts error:', err);
+    res.status(500).json({ error: '게시글을 불러오지 못했습니다.' });
+  }
+});
+
+app.post('/community/posts', authRequired, async (req, res) => {
+  const userId = req.user.id;
+  const { title, content = '', imageUrls = [] } = req.body || {};
+  if (!title || typeof title !== 'string') {
+    return res.status(400).json({ error: 'title이 필요합니다.' });
+  }
+  try {
+    const post = await prisma.post.create({
+      data: {
+        userId,
+        title,
+        content,
+        imageUrls: JSON.stringify((imageUrls || []).slice(0, 4)),
+      },
+      include: {
+        user: { include: { profile: true } },
+        likes: true,
+        comments: {
+          include: { user: { include: { profile: true } } },
+        },
+      },
+    });
+    res.status(201).json(mapPost(post, userId));
+  } catch (err) {
+    console.error('Create post error:', err);
+    res.status(500).json({ error: '게시글 저장 중 오류' });
+  }
+});
+
+app.post('/community/posts/:id/like', authRequired, async (req, res) => {
+  const userId = req.user.id;
+  const postId = Number(req.params.id);
+  try {
+    const existing = await prisma.postLike.findFirst({ where: { userId, postId } });
+    if (existing) {
+      await prisma.postLike.delete({ where: { id: existing.id } });
+      return res.json({ ok: true, liked: false });
+    }
+    await prisma.postLike.create({ data: { userId, postId } });
+    res.json({ ok: true, liked: true });
+  } catch (err) {
+    console.error('Toggle like error:', err);
+    res.status(500).json({ error: '좋아요 처리 중 오류' });
+  }
+});
+
+app.post('/community/posts/:id/comments', authRequired, async (req, res) => {
+  const userId = req.user.id;
+  const postId = Number(req.params.id);
+  const { content } = req.body || {};
+  if (!content) {
+    return res.status(400).json({ error: 'content가 필요합니다.' });
+  }
+  try {
+    const comment = await prisma.postComment.create({
+      data: { userId, postId, content },
+      include: { user: { include: { profile: true } } },
+    });
+    res.status(201).json({
+      id: comment.id,
+      content: comment.content,
+      createdAt: comment.createdAt,
+      author: {
+        id: comment.user.id,
+        email: comment.user.email,
+        profile: presentProfile(comment.user.profile, comment.user),
+      },
+    });
+  } catch (err) {
+    console.error('Create comment error:', err);
+    res.status(500).json({ error: '댓글 저장 중 오류' });
+  }
+});
+
+app.get('/community/profile/:userId', authOptional, async (req, res) => {
+  const targetId = Number(req.params.userId);
+  try {
+    const user = await prisma.user.findUnique({
+      where: { id: targetId },
+      include: { profile: true },
+    });
+    if (!user) return res.status(404).json({ error: '사용자를 찾을 수 없습니다.' });
+    const profile = presentProfile(user.profile, user);
+    if (!profile.isPublic && req.user?.id !== targetId) {
+      return res.status(403).json({ error: '비공개 프로필입니다.' });
+    }
+    const latestPosts = await prisma.post.findMany({
+      where: { userId: targetId },
+      orderBy: { createdAt: 'desc' },
+      take: 5,
+    });
+    res.json({
+      profile,
+      posts: latestPosts.map((p) => ({
+        id: p.id,
+        title: p.title,
+        createdAt: p.createdAt,
+        imageUrls: p.imageUrls ? JSON.parse(p.imageUrls) : [],
+      })),
+    });
+  } catch (err) {
+    console.error('Profile fetch error:', err);
+    res.status(500).json({ error: '프로필을 불러오지 못했습니다.' });
   }
 });
 

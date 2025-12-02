@@ -11,6 +11,7 @@ import Wardrobe from "./components/Wardrobe";
 import ProfileModal from "./components/ProfileModal";
 import HomeShowcase from "./components/HomeShowcase";
 import ColorGuide from "./components/ColorGuide";
+import Community from "./components/Community";
 
 const API_BASE =
   import.meta.env.VITE_API_BASE || "https://colorme-production.up.railway.app";
@@ -264,6 +265,7 @@ function App() {
             { key: "shop", label: "쇼핑몰 링크" },
             { key: "ai", label: "AI 코디 컨설턴트" },
             { key: "wardrobe", label: "내 옷장" },
+            { key: "community", label: "커뮤니티" },
             { key: "guide", label: "Color 가이드" },
           ].map((tab) => (
             <button
@@ -319,6 +321,9 @@ function App() {
 
         {activeTab === "wardrobe" && (
           <Wardrobe apiBase={API_BASE} token={token} />
+        )}
+        {activeTab === "community" && (
+          <Community apiBase={API_BASE} token={token} />
         )}
         {activeTab === "guide" && (
           <ColorGuide onSelectHarmony={applyHarmonyPreset} />

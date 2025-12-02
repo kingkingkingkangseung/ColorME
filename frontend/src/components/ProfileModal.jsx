@@ -14,6 +14,7 @@ export default function ProfileModal({ open, onClose, onSave, profile }) {
   const [avatarPreview, setAvatarPreview] = useState("");
   const [heroPreview, setHeroPreview] = useState("");
   const [bio, setBio] = useState("");
+  const [isPublic, setIsPublic] = useState(true);
   const [saving, setSaving] = useState(false);
 
   useEffect(() => {
@@ -22,6 +23,7 @@ export default function ProfileModal({ open, onClose, onSave, profile }) {
       setAvatarPreview(profile?.avatarUrl || "");
       setHeroPreview(profile?.heroUrl || "");
       setBio(profile?.bio || "");
+      setIsPublic(profile?.isPublic ?? true);
     }
   }, [open, profile]);
 
@@ -49,6 +51,7 @@ export default function ProfileModal({ open, onClose, onSave, profile }) {
       avatarUrl: avatarPreview,
       heroUrl: heroPreview,
       bio: bio.trim(),
+      isPublic,
     });
     setSaving(false);
   };
@@ -99,6 +102,23 @@ export default function ProfileModal({ open, onClose, onSave, profile }) {
               marginTop: 6,
             }}
           />
+        </label>
+
+        <label
+          style={{
+            display: "flex",
+            alignItems: "center",
+            gap: 8,
+            marginTop: 12,
+            fontSize: 13,
+          }}
+        >
+          <input
+            type="checkbox"
+            checked={isPublic}
+            onChange={(e) => setIsPublic(e.target.checked)}
+          />
+          프로필 공개 (해제하면 본인만 볼 수 있어요)
         </label>
 
         <label style={{ display: "block", marginTop: 16, fontSize: 13 }}>

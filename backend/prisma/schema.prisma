@@ -8,12 +8,15 @@ datasource db {
 }
 
 model User {
-  id           Int      @id @default(autoincrement())
-  email        String   @unique
-  passwordHash String   @map("password_hash")
-  createdAt    DateTime @default(now()) @map("created_at")
+  id           Int            @id @default(autoincrement())
+  email        String         @unique
+  passwordHash String         @map("password_hash")
+  createdAt    DateTime       @default(now()) @map("created_at")
   outfits      Outfit[]
   profile      Profile?
+  posts        Post[]
+  postLikes    PostLike[]
+  postComments PostComment[]
 
   @@map("users")
 }
@@ -38,8 +41,51 @@ model Profile {
   avatarUrl   String?  @map("avatar_url")
   heroUrl     String?  @map("hero_url")
   bio         String?
+  isPublic    Boolean  @default(true) @map("is_public")
   updatedAt   DateTime @default(now()) @updatedAt @map("updated_at")
   user        User     @relation(fields: [userId], references: [id])
 
   @@map("profiles")
+}
+
+model Post {
+  id        Int      @id @default(autoincrement())
+  userId    Int      @map("user_id")
+  title     String
+  content   String?
+  imageUrls String?  @map("image_urls")
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @default(now()) @updatedAt @map("updated_at")
+
+  user      User         @relation(fields: [userId], references: [id])
+  likes     PostLike[]
+  comments  PostComment[]
+
+  @@map("posts")
+}
+
+model PostLike {
+  id        Int      @id @default(autoincrement())
+  userId    Int      @map("user_id")
+  postId    Int      @map("post_id")
+  createdAt DateTime @default(now()) @map("created_at")
+
+  user User @relation(fields: [userId], references: [id])
+  post Post @relation(fields: [postId], references: [id])
+
+  @@unique([userId, postId])
+  @@map("post_likes")
+}
+
+model PostComment {
+  id        Int      @id @default(autoincrement())
+  userId    Int      @map("user_id")
+  postId    Int      @map("post_id")
+  content   String
+  createdAt DateTime @default(now()) @map("created_at")
+
+  user User @relation(fields: [userId], references: [id])
+  post Post @relation(fields: [postId], references: [id])
+
+  @@map("post_comments")
 }
