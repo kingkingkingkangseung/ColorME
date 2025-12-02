@@ -35,8 +35,24 @@ function presentProfile(profile, user) {
   };
 }
 
+function safeParseImages(value) {
+  if (!value) return [];
+  try {
+    const parsed = JSON.parse(value);
+    if (Array.isArray(parsed)) {
+      return parsed
+        .map((url) => (typeof url === 'string' ? url.trim() : ''))
+        .filter((url) => url.length > 0);
+    }
+    return [];
+  } catch (err) {
+    console.error('Failed to parse imageUrls:', err);
+    return [];
+  }
+}
+
 function mapPost(post, currentUserId) {
-  const rawImages = post.imageUrls ? JSON.parse(post.imageUrls) : [];
+  const rawImages = safeParseImages(post.imageUrls);
   return {
     id: post.id,
     title: post.title,
@@ -250,12 +266,16 @@ app.post('/community/posts', authRequired, async (req, res) => {
     return res.status(400).json({ error: 'title이 필요합니다.' });
   }
   try {
+    const sanitized = (imageUrls || [])
+      .map((url) => (typeof url === 'string' ? url.trim() : ''))
+      .filter((url) => url.length > 0)
+      .slice(0, 4);
     const post = await prisma.post.create({
       data: {
         userId,
         title,
         content,
-        imageUrls: JSON.stringify((imageUrls || []).slice(0, 4)),
+        imageUrls: sanitized.length ? JSON.stringify(sanitized) : null,
       },
       include: {
         user: { include: { profile: true } },

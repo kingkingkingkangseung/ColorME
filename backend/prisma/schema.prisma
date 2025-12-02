@@ -9,8 +9,8 @@ datasource db {
 
 model User {
   id           Int            @id @default(autoincrement())
-  email        String         @unique
-  passwordHash String         @map("password_hash")
+  email        String         @unique @db.VarChar(255)
+  passwordHash String         @map("password_hash") @db.VarChar(255)
   createdAt    DateTime       @default(now()) @map("created_at")
   outfits      Outfit[]
   profile      Profile?
@@ -24,7 +24,7 @@ model User {
 model Outfit {
   id         Int      @id @default(autoincrement())
   userId     Int      @map("user_id")
-  name       String
+  name       String   @db.VarChar(255)
   topColor   String   @map("top_color")
   bottomColor String  @map("bottom_color")
   shoesColor String   @map("shoes_color")
@@ -37,10 +37,10 @@ model Outfit {
 
 model Profile {
   userId      Int      @id @map("user_id")
-  displayName String?  @map("display_name")
-  avatarUrl   String?  @map("avatar_url")
-  heroUrl     String?  @map("hero_url")
-  bio         String?
+  displayName String?  @map("display_name") @db.VarChar(255)
+  avatarUrl   String?  @map("avatar_url") @db.MediumText
+  heroUrl     String?  @map("hero_url") @db.MediumText
+  bio         String?  @db.Text
   isPublic    Boolean  @default(true) @map("is_public")
   updatedAt   DateTime @default(now()) @updatedAt @map("updated_at")
   user        User     @relation(fields: [userId], references: [id])
@@ -51,9 +51,9 @@ model Profile {
 model Post {
   id        Int      @id @default(autoincrement())
   userId    Int      @map("user_id")
-  title     String
-  content   String?
-  imageUrls String?  @map("image_urls")
+  title     String   @db.VarChar(255)
+  content   String?  @db.Text
+  imageUrls String?  @map("image_urls") @db.LongText
   createdAt DateTime @default(now()) @map("created_at")
   updatedAt DateTime @default(now()) @updatedAt @map("updated_at")
 
@@ -81,7 +81,7 @@ model PostComment {
   id        Int      @id @default(autoincrement())
   userId    Int      @map("user_id")
   postId    Int      @map("post_id")
-  content   String
+  content   String   @db.Text
   createdAt DateTime @default(now()) @map("created_at")
 
   user User @relation(fields: [userId], references: [id])
