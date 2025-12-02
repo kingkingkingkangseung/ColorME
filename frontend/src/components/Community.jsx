@@ -2,14 +2,23 @@ import { useEffect, useMemo, useState } from "react";
 import axios from "axios";
 
 function ImageGrid({ urls }) {
-  if (!urls?.length) return null;
+  const cleaned =
+    urls
+      ?.map((url) => (typeof url === "string" ? url.trim() : ""))
+      .filter(Boolean) || [];
+
+  if (!cleaned.length) return null;
+
   return (
     <div style={{ display: "flex", gap: 8, flexWrap: "wrap", marginTop: 12 }}>
-      {urls.map((url) => (
+      {cleaned.map((url) => (
         <img
           key={url}
           src={url}
           alt="post"
+          onError={(e) => {
+            e.currentTarget.style.display = "none";
+          }}
           style={{
             width: 120,
             height: 120,
@@ -170,6 +179,7 @@ export default function Community({ apiBase, token }) {
   const [title, setTitle] = useState("");
   const [content, setContent] = useState("");
   const [imagesInput, setImagesInput] = useState("");
+  const [uploadedImages, setUploadedImages] = useState([]);
   const [profilePreview, setProfilePreview] = useState(null);
   const headers = useMemo(() => {
     if (!token) return {};
@@ -198,23 +208,52 @@ export default function Community({ apiBase, token }) {
     if (!token) return alert('로그인이 필요합니다.');
     if (!title.trim()) return alert('제목을 입력해 주세요.');
     try {
+      const urlImages = imagesInput
+        .split('\n')
+        .map((line) => line.trim())
+        .filter(Boolean);
+      const merged = [...urlImages, ...uploadedImages].slice(0, 4);
       const payload = {
         title: title.trim(),
         content: content.trim(),
-        imageUrls: imagesInput
-          .split('\n')
-          .map((line) => line.trim())
-          .filter(Boolean),
+        imageUrls: merged,
       };
       const res = await axios.post(`${apiBase}/community/posts`, payload, { headers });
       setPosts((prev) => [res.data, ...prev]);
       setTitle('');
       setContent('');
       setImagesInput('');
+      setUploadedImages([]);
     } catch (err) {
       console.error(err);
       alert('게시글 저장 중 오류가 발생했습니다.');
     }
+  };
+
+  const fileToDataUrl = (file) =>
+    new Promise((resolve, reject) => {
+      const reader = new FileReader();
+      reader.onloadend = () => resolve(reader.result);
+      reader.onerror = reject;
+      reader.readAsDataURL(file);
+    });
+
+  const handleFileChange = async (e) => {
+    const files = Array.from(e.target.files || []);
+    if (!files.length) return;
+    try {
+      const converted = await Promise.all(files.map(fileToDataUrl));
+      setUploadedImages((prev) => [...prev, ...converted].slice(0, 4));
+    } catch (err) {
+      console.error(err);
+      alert('이미지 변환 중 오류가 발생했습니다.');
+    } finally {
+      e.target.value = '';
+    }
+  };
+
+  const removeUploaded = (index) => {
+    setUploadedImages((prev) => prev.filter((_, i) => i !== index));
   };
 
   const toggleLike = async (postId) => {
@@ -331,6 +370,54 @@ export default function Community({ apiBase, token }) {
               padding: "8px 12px",
             }}
           />
+          <div
+            style={{
+              display: "flex",
+              flexDirection: "column",
+              gap: 8,
+            }}
+          >
+            <label style={{ fontSize: 13, color: "#cbd5f5" }}>
+              또는 파일 첨부 (최대 4개)
+              <input
+                type="file"
+                accept="image/*"
+                multiple
+                onChange={handleFileChange}
+                style={{ display: "block", marginTop: 6 }}
+              />
+            </label>
+            {uploadedImages.length > 0 && (
+              <div style={{ display: "flex", gap: 8 }}>
+                {uploadedImages.map((img, idx) => (
+                  <div key={idx} style={{ position: "relative" }}>
+                    <img
+                      src={img}
+                      alt="preview"
+                      style={{ width: 70, height: 70, objectFit: "cover", borderRadius: 12 }}
+                    />
+                    <button
+                      onClick={() => removeUploaded(idx)}
+                      style={{
+                        position: "absolute",
+                        top: -6,
+                        right: -6,
+                        borderRadius: "50%",
+                        border: "none",
+                        width: 20,
+                        height: 20,
+                        background: "rgba(239,68,68,0.8)",
+                        color: "white",
+                        cursor: "pointer",
+                      }}
+                    >
+                      ×
+                    </button>
+                  </div>
+                ))}
+              </div>
+            )}
+          </div>
           <button
             onClick={handleCreatePost}
             style={{
