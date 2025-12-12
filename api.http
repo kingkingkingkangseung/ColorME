@@ -1,0 +1,134 @@
+@base = https://colorme-production.up.railway.app
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+#@base = 
+@token = eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6OCwiZW1haWwiOiJ0ZXN0MUBleGFtcGxlLmNvbSIsImlhdCI6MTc2NTU1MDQ1MCwiZXhwIjoxNzY2MTU1MjUwfQ.eAAfxXu0hlKBvkpps9a4FUSrOnIOVDrfFKuxtUm1RqY
+
+### 헬스체크
+GET {{base}}/health
+
+### 회원가입
+POST {{base}}/auth/register
+Content-Type: application/json
+
+{ "email": "test1@example.com", "password": "pass1234" }
+
+### 로그인
+POST {{base}}/auth/login
+Content-Type: application/json
+
+{ "email": "test1@example.com", "password": "pass1234" }
+
+### 내 정보
+GET {{base}}/auth/me
+Authorization: Bearer {{token}}
+
+### 프로필 조회
+GET {{base}}/profile
+Authorization: Bearer {{token}}
+
+### 프로필 수정
+PUT {{base}}/profile
+Authorization: Bearer {{token}}
+Content-Type: application/json
+
+{
+  "displayName": "Jay",
+  "avatarUrl": "",
+  "heroUrl": "",
+  "bio": "Hello",
+  "isPublic": true
+}
+
+### 게시글 목록
+GET {{base}}/community/posts
+
+### 게시글 작성
+POST {{base}}/community/posts
+Authorization: Bearer {{token}}
+Content-Type: application/json
+
+{
+  "title": "오늘 코디",
+  "content": "편하게",
+  "imageUrls": ["https://..."],
+  "imageUrls": []
+}
+
+### 유저 프로필(공개만)
+GET {{base}}/community/profile/1
+
+### 팔레트
+GET {{base}}/palette?mood=minimal
+# mood: minimal | street | casual
+
+### AI 코디 추천
+POST {{base}}/ask-ai
+Content-Type: application/json
+
+{ "question": "오늘 뭐 입을까?" }
+
+### 내 코디 리스트
+GET {{base}}/outfits
+Authorization: Bearer {{token}}
+
+### 코디 저장
+POST {{base}}/outfits
+Authorization: Bearer {{token}}
+Content-Type: application/json
+
+{
+  "name": "주말룩",
+  "topColor": "#ffffff",
+  "bottomColor": "#000000",
+  "shoesColor": "#f97316"
+}
+
+### 코디 삭제
+DELETE {{base}}/outfits/10
+Authorization: Bearer {{token}}
+
+### 코디 즐겨찾기 토글
+POST {{base}}/outfits/11/favorite
+Authorization: Bearer {{token}}
