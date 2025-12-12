@@ -1,46 +1,3 @@
-@base = https://colorme-production.up.railway.app
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 
 #@base = 
 @token = eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6OCwiZW1haWwiOiJ0ZXN0MUBleGFtcGxlLmNvbSIsImlhdCI6MTc2NTU1MDQ1MCwiZXhwIjoxNzY2MTU1MjUwfQ.eAAfxXu0hlKBvkpps9a4FUSrOnIOVDrfFKuxtUm1RqY
@@ -92,8 +49,8 @@ Content-Type: application/json
 {
   "title": "오늘 코디",
   "content": "편하게",
-  "imageUrls": ["https://..."],
-  "imageUrls": []
+  "imageUrls": ["https://..."]
+  
 }
 
 ### 유저 프로필(공개만)
