@@ -10,6 +10,52 @@ const PALETTES = {
   casual: ["#f97316", "#fb7185", "#22c55e", "#3b82f6", "#a855f7"],
 };
 
+function hexToRgb(hex) {
+  const cleaned = hex.replace("#", "").trim();
+  if (cleaned.length === 3) {
+    const r = parseInt(cleaned[0] + cleaned[0], 16);
+    const g = parseInt(cleaned[1] + cleaned[1], 16);
+    const b = parseInt(cleaned[2] + cleaned[2], 16);
+    return { r, g, b };
+  }
+  if (cleaned.length === 6) {
+    const r = parseInt(cleaned.slice(0, 2), 16);
+    const g = parseInt(cleaned.slice(2, 4), 16);
+    const b = parseInt(cleaned.slice(4, 6), 16);
+    return { r, g, b };
+  }
+  return { r: 255, g: 255, b: 255 };
+}
+
+function rgbToHsl({ r, g, b }) {
+  const rn = r / 255;
+  const gn = g / 255;
+  const bn = b / 255;
+  const max = Math.max(rn, gn, bn);
+  const min = Math.min(rn, gn, bn);
+  const delta = max - min;
+  let h = 0;
+  if (delta !== 0) {
+    if (max === rn) h = ((gn - bn) / delta) % 6;
+    else if (max === gn) h = (bn - rn) / delta + 2;
+    else h = (rn - gn) / delta + 4;
+    h = Math.round(h * 60);
+    if (h < 0) h += 360;
+  }
+  const l = (max + min) / 2;
+  const s = delta === 0 ? 0 : delta / (1 - Math.abs(2 * l - 1));
+  return { h, s, l };
+}
+
+function hueDiff(a, b) {
+  const diff = Math.abs(a - b);
+  return Math.min(diff, 360 - diff);
+}
+
+function clampScore(value) {
+  return Math.max(0, Math.min(10, value));
+}
+
 function moodLabel(m) {
   if (m === "minimal") return "Minimal";
   if (m === "street") return "Street";
@@ -38,6 +84,52 @@ export default function PaletteSimulator({
   const [saving, setSaving] = useState(false);
   const [saveMessage, setSaveMessage] = useState("");
   const [favoriteOutfits, setFavoriteOutfits] = useState([]);
+
+  const colorMetrics = React.useMemo(() => {
+    const top = rgbToHsl(hexToRgb(topColor));
+    const bottom = rgbToHsl(hexToRgb(bottomColor));
+    const shoes = rgbToHsl(hexToRgb(shoesColor));
+
+    const diffTopBottom = hueDiff(top.h, bottom.h);
+    const diffTopShoes = hueDiff(top.h, shoes.h);
+    const diffBottomShoes = hueDiff(bottom.h, shoes.h);
+    const maxDiff = Math.max(diffTopBottom, diffTopShoes, diffBottomShoes);
+    const complementaryScore = clampScore(10 - Math.abs(180 - maxDiff) / 18);
+
+    const values = [top.l, bottom.l, shoes.l];
+    const avgValue = values.reduce((a, b) => a + b, 0) / values.length;
+    const valueStd = Math.sqrt(values.reduce((acc, v) => acc + (v - avgValue) ** 2, 0) / values.length);
+    const valueScore = clampScore(10 - Math.abs(valueStd - 0.18) / 0.18 * 10);
+
+    const chromaValues = [top.s, bottom.s, shoes.s];
+    const avgChroma = chromaValues.reduce((a, b) => a + b, 0) / chromaValues.length;
+    const chromaStd = Math.sqrt(
+      chromaValues.reduce((acc, v) => acc + (v - avgChroma) ** 2, 0) / chromaValues.length
+    );
+    const chromaScore = clampScore(10 - Math.abs(chromaStd - 0.2) / 0.2 * 10);
+
+    let harmonyType = "balanced";
+    if (maxDiff >= 150) harmonyType = "complementary";
+    else if (diffTopBottom <= 35 && diffTopShoes <= 35 && diffBottomShoes <= 35) harmonyType = "analogous";
+    else if (
+      [diffTopBottom, diffTopShoes, diffBottomShoes].filter((d) => d >= 100 && d <= 140).length >= 2
+    )
+      harmonyType = "triadic";
+
+    const neutralParts = [
+      top.s < 0.12 ? "상의" : null,
+      bottom.s < 0.12 ? "하의" : null,
+      shoes.s < 0.12 ? "신발" : null,
+    ].filter(Boolean);
+
+    return {
+      harmonyType,
+      complementaryScore: Math.round(complementaryScore * 10) / 10,
+      valueScore: Math.round(valueScore * 10) / 10,
+      chromaScore: Math.round(chromaScore * 10) / 10,
+      neutralParts,
+    };
+  }, [topColor, bottomColor, shoesColor]);
 
   const normalizedMood = mood || "minimal";
   const colors = PALETTES[normalizedMood] || PALETTES.minimal;
@@ -124,6 +216,26 @@ export default function PaletteSimulator({
       setSaving(false);
     }
   };
+
+  const harmonyLabel = {
+    complementary: "보색 대비",
+    analogous: "유사색 안정",
+    triadic: "삼색 포인트",
+    balanced: "균형 조합",
+  }[colorMetrics.harmonyType];
+
+  const harmonyDescription = (() => {
+    if (colorMetrics.harmonyType === "complementary") {
+      return "상의와 하의가 보색 관계에 가까워 대비가 크고 시선을 끌어요. 신발을 중립색으로 두면 안정감이 더해집니다.";
+    }
+    if (colorMetrics.harmonyType === "analogous") {
+      return "색상환에서 가까운 색들로 구성되어 전체 톤이 부드럽고 안정적인 느낌이에요.";
+    }
+    if (colorMetrics.harmonyType === "triadic") {
+      return "서로 다른 색이 분명해서 포인트가 잘 살아납니다. 하나를 메인으로 잡으면 더 세련돼요.";
+    }
+    return "명도와 채도의 균형을 기준으로 안정감 있는 조합으로 평가됩니다.";
+  })();
 
   return (
     <div
@@ -249,6 +361,8 @@ export default function PaletteSimulator({
         style={{
           display: "flex",
           justifyContent: "flex-start",
+          gap: 24,
+          alignItems: "stretch",
         }}
       >
         <div
@@ -342,6 +456,87 @@ export default function PaletteSimulator({
                 background: shoesColor,
               }}
             />
+          </div>
+        </div>
+
+        <div
+          style={{
+            flex: 1,
+            minWidth: 220,
+            borderRadius: 24,
+            padding: "20px 22px",
+            background: "rgba(15,23,42,0.7)",
+            border: "1px solid rgba(51,65,85,0.6)",
+            display: "flex",
+            flexDirection: "column",
+            gap: 14,
+          }}
+        >
+          <div>
+            <div style={{ fontSize: 14, fontWeight: 700, color: "#e2e8f0" }}>
+              Color Harmony Score
+            </div>
+            <div style={{ fontSize: 12, color: "rgb(148,163,184)", marginTop: 4 }}>
+              {harmonyLabel} 기준으로 자동 평가한 결과입니다.
+            </div>
+          </div>
+
+          {[
+            { label: "보색 대비", value: colorMetrics.complementaryScore },
+            { label: "명도 균형", value: colorMetrics.valueScore },
+            { label: "채도 균형", value: colorMetrics.chromaScore },
+          ].map((item) => (
+            <div key={item.label}>
+              <div
+                style={{
+                  display: "flex",
+                  justifyContent: "space-between",
+                  fontSize: 12,
+                  color: "#cbd5f5",
+                  marginBottom: 6,
+                }}
+              >
+                <span>{item.label}</span>
+                <span>{item.value}/10</span>
+              </div>
+              <div
+                style={{
+                  width: "100%",
+                  height: 8,
+                  borderRadius: 999,
+                  background: "rgba(148,163,184,0.2)",
+                  overflow: "hidden",
+                }}
+              >
+                <div
+                  style={{
+                    width: `${item.value * 10}%`,
+                    height: "100%",
+                    borderRadius: 999,
+                    background: "linear-gradient(90deg, #38bdf8, #22c55e)",
+                  }}
+                />
+              </div>
+            </div>
+          ))}
+
+          <div
+            style={{
+              padding: 12,
+              borderRadius: 16,
+              background: "rgba(2,6,23,0.7)",
+              border: "1px solid rgba(51,65,85,0.5)",
+              fontSize: 12,
+              color: "#e2e8f0",
+              lineHeight: 1.5,
+            }}
+          >
+            {harmonyDescription}
+            {colorMetrics.neutralParts.length > 0 && (
+              <span style={{ display: "block", marginTop: 8, color: "#94a3b8" }}>
+                중립감 있는 색상: {colorMetrics.neutralParts.join(", ")}
+              </span>
+            )}
           </div>
         </div>
       </div>
