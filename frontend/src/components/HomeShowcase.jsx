@@ -50,7 +50,7 @@ export default function HomeShowcase({ profile, outfits = [], outfitsLoading = f
 
   const moodCounts = recentOutfits.reduce(
     (acc, outfit) => {
-      const mood = (outfit?.mood || "").toLowerCase();
+      const mood = (outfit?.mood || "minimal").toLowerCase();
       if (mood === "minimal") acc.minimal += 1;
       else if (mood === "street") acc.street += 1;
       else if (mood === "casual") acc.casual += 1;

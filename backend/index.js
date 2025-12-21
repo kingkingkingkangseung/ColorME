@@ -16,6 +16,7 @@ function mapOutfitRow(row) {
     id: row.id,
     userId: row.userId,
     name: row.name,
+    mood: row.mood || 'minimal',
     topColor: row.topColor,
     bottomColor: row.bottomColor,
     shoesColor: row.shoesColor,
@@ -434,7 +435,7 @@ app.get('/outfits', authRequired, async (req, res) => {
 // 코디 저장
 app.post('/outfits', authRequired, async (req, res) => {
   const userId = req.user.id;
-  const { name, topColor, bottomColor, shoesColor } = req.body || {};
+  const { name, topColor, bottomColor, shoesColor, mood = 'minimal' } = req.body || {};
 
   if (!name || !topColor || !bottomColor || !shoesColor) {
     return res.status(400).json({
@@ -447,6 +448,7 @@ app.post('/outfits', authRequired, async (req, res) => {
       data: {
         userId,
         name,
+        mood,
         topColor,
         bottomColor,
         shoesColor,

@@ -25,6 +25,7 @@ model Outfit {
   id         Int      @id @default(autoincrement())
   userId     Int      @map("user_id")
   name       String   @db.VarChar(255)
+  mood       String   @default("minimal") @db.VarChar(32)
   topColor   String   @map("top_color")
   bottomColor String  @map("bottom_color")
   shoesColor String   @map("shoes_color")
