@@ -39,7 +39,7 @@ function ProfileBadge({ author, onOpenProfile }) {
   const avatarUrl = author?.profile?.avatarUrl;
   return (
     <button
-      onClick={() => onOpenProfile(author?.id)}
+      onClick={() => onOpenProfile(author)}
       style={{
         display: "flex",
         alignItems: "center",
@@ -351,11 +351,17 @@ export default function Community({ apiBase, token }) {
     }
   };
 
-  const openProfile = async (userId) => {
+  const openProfile = async (author) => {
+    const userId = author?.id;
+    if (!userId) return;
     try {
       const res = await axios.get(`${apiBase}/community/profile/${userId}`, { headers });
       setProfilePreview(res.data);
     } catch (err) {
+      if (err?.response?.status === 403 && author?.profile) {
+        setProfilePreview({ profile: author.profile, posts: [] });
+        return;
+      }
       console.error(err);
       alert('프로필을 확인할 수 없습니다.');
     }
@@ -542,7 +548,7 @@ export default function Community({ apiBase, token }) {
                 {post.comments.map((comment) => (
                   <div key={comment.id} style={{ marginBottom: 8 }}>
                     <button
-                      onClick={() => openProfile(comment.author.id)}
+                      onClick={() => openProfile(comment.author)}
                       style={{
                         border: "none",
                         background: "transparent",

@@ -32,6 +32,8 @@ function App() {
   const [profile, setProfile] = useState(null);
   const [profileLoading, setProfileLoading] = useState(false);
   const [profileModalOpen, setProfileModalOpen] = useState(false);
+  const [outfits, setOutfits] = useState([]);
+  const [outfitsLoading, setOutfitsLoading] = useState(false);
   const [simMood, setSimMood] = useState("minimal");
   const [simTopColor, setSimTopColor] = useState("#ffffff");
   const [simBottomColor, setSimBottomColor] = useState("#000000");
@@ -89,6 +91,30 @@ function App() {
       }
     };
     fetchProfile();
+  }, [token]);
+
+  useEffect(() => {
+    if (!token) {
+      setOutfits([]);
+      return;
+    }
+    const fetchOutfits = async () => {
+      try {
+        setOutfitsLoading(true);
+        const res = await axios.get(`${API_BASE}/outfits`, {
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
+        });
+        setOutfits(res.data || []);
+      } catch (err) {
+        console.error("내 옷장 데이터 불러오기 실패:", err);
+        setOutfits([]);
+      } finally {
+        setOutfitsLoading(false);
+      }
+    };
+    fetchOutfits();
   }, [token]);
 
   const handleLoginSuccess = (newToken, user) => {
@@ -295,7 +321,13 @@ function App() {
         </div>
 
         {/* 탭 내용 */}
-        {activeTab === "home" && <HomeShowcase profile={profile} />}
+        {activeTab === "home" && (
+          <HomeShowcase
+            profile={profile}
+            outfits={outfits}
+            outfitsLoading={outfitsLoading}
+          />
+        )}
 
         {activeTab === "palette" && (
           <PaletteSimulator
