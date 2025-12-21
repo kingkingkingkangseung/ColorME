@@ -209,6 +209,7 @@ export default function PaletteSimulator({
 
       setSaveMessage("코디가 ‘내 옷장’에 저장되었습니다.");
       setOutfitName("");
+      window.dispatchEvent(new Event("colorme:outfitsUpdated"));
     } catch (err) {
       console.error(err);
       setSaveMessage("저장 중 오류가 발생했습니다. 잠시 후 다시 시도해 주세요.");

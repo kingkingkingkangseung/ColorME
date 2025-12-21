@@ -93,28 +93,35 @@ function App() {
     fetchProfile();
   }, [token]);
 
-  useEffect(() => {
+  const fetchOutfits = async () => {
     if (!token) {
       setOutfits([]);
       return;
     }
-    const fetchOutfits = async () => {
-      try {
-        setOutfitsLoading(true);
-        const res = await axios.get(`${API_BASE}/outfits`, {
-          headers: {
-            Authorization: `Bearer ${token}`,
-          },
-        });
-        setOutfits(res.data || []);
-      } catch (err) {
-        console.error("내 옷장 데이터 불러오기 실패:", err);
-        setOutfits([]);
-      } finally {
-        setOutfitsLoading(false);
-      }
-    };
+    try {
+      setOutfitsLoading(true);
+      const res = await axios.get(`${API_BASE}/outfits`, {
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+      });
+      setOutfits(res.data || []);
+    } catch (err) {
+      console.error("내 옷장 데이터 불러오기 실패:", err);
+      setOutfits([]);
+    } finally {
+      setOutfitsLoading(false);
+    }
+  };
+
+  useEffect(() => {
     fetchOutfits();
+  }, [token]);
+
+  useEffect(() => {
+    const handler = () => fetchOutfits();
+    window.addEventListener("colorme:outfitsUpdated", handler);
+    return () => window.removeEventListener("colorme:outfitsUpdated", handler);
   }, [token]);
 
   const handleLoginSuccess = (newToken, user) => {
