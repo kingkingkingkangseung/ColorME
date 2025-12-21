@@ -381,8 +381,8 @@ export default function PaletteSimulator({
           {/* 머리 */}
           <div
             style={{
-              width: 120,
-              height: 120,
+              width: 110,
+              height: 110,
               borderRadius: "50%",
               background: "#f5f5f5",
               boxShadow: "0 10px 20px rgba(0,0,0,0.4)",
@@ -401,7 +401,7 @@ export default function PaletteSimulator({
           <div
             style={{
               width: 180,
-              height: 270,
+              height: 300,
               borderRadius: "140px 140px 80px 80px",
               background: topColor,
               boxShadow: "0 20px 36px rgba(0,0,0,0.6)",
