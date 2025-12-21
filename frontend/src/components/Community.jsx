@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useState } from "react";
 import axios from "axios";
 
-function ImageGrid({ urls }) {
+function ImageGrid({ urls, onOpen }) {
   const cleaned =
     urls
       ?.map((url) => (typeof url === "string" ? url.trim() : ""))
@@ -16,6 +16,7 @@ function ImageGrid({ urls }) {
           key={url}
           src={url}
           alt="post"
+          onClick={() => onOpen && onOpen(url)}
           onError={(e) => {
             e.currentTarget.style.display = "none";
           }}
@@ -25,6 +26,7 @@ function ImageGrid({ urls }) {
             objectFit: "cover",
             borderRadius: 12,
             border: "1px solid rgba(255,255,255,0.1)",
+            cursor: onOpen ? "zoom-in" : "default",
           }}
         />
       ))}
@@ -172,6 +174,63 @@ function ProfilePreviewModal({ data, onClose }) {
   );
 }
 
+function ImagePreviewModal({ src, onClose }) {
+  if (!src) return null;
+  return (
+    <div
+      onClick={onClose}
+      style={{
+        position: "fixed",
+        inset: 0,
+        background: "rgba(2,6,23,0.8)",
+        display: "flex",
+        alignItems: "center",
+        justifyContent: "center",
+        zIndex: 1000,
+      }}
+    >
+      <div
+        onClick={(e) => e.stopPropagation()}
+        style={{
+          position: "relative",
+          maxWidth: "90vw",
+          maxHeight: "90vh",
+        }}
+      >
+        <img
+          src={src}
+          alt="preview"
+          style={{
+            display: "block",
+            maxWidth: "90vw",
+            maxHeight: "90vh",
+            borderRadius: 16,
+            border: "1px solid rgba(148,163,184,0.4)",
+          }}
+        />
+        <button
+          onClick={onClose}
+          style={{
+            position: "absolute",
+            top: -10,
+            right: -10,
+            width: 32,
+            height: 32,
+            borderRadius: "50%",
+            border: "none",
+            background: "rgba(59,130,246,0.9)",
+            color: "#0f172a",
+            fontWeight: 700,
+            cursor: "pointer",
+          }}
+        >
+          ×
+        </button>
+      </div>
+    </div>
+  );
+}
+
 export default function Community({ apiBase, token }) {
   const [posts, setPosts] = useState([]);
   const [loading, setLoading] = useState(false);
@@ -181,6 +240,7 @@ export default function Community({ apiBase, token }) {
   const [imagesInput, setImagesInput] = useState("");
   const [uploadedImages, setUploadedImages] = useState([]);
   const [profilePreview, setProfilePreview] = useState(null);
+  const [imagePreview, setImagePreview] = useState("");
   const headers = useMemo(() => {
     if (!token) return {};
     return { Authorization: `Bearer ${token}` };
@@ -462,7 +522,7 @@ export default function Community({ apiBase, token }) {
               </div>
               <h3 style={{ marginBottom: 8 }}>{post.title}</h3>
               {post.content && <p style={{ color: "#cbd5f5" }}>{post.content}</p>}
-              <ImageGrid urls={post.imageUrls} />
+              <ImageGrid urls={post.imageUrls} onOpen={setImagePreview} />
               <div style={{ display: "flex", gap: 12, marginTop: 12 }}>
                 <button
                   onClick={() => toggleLike(post.id)}
@@ -481,7 +541,21 @@ export default function Community({ apiBase, token }) {
               <div style={{ marginTop: 16 }}>
                 {post.comments.map((comment) => (
                   <div key={comment.id} style={{ marginBottom: 8 }}>
-                    <strong>{comment.author.profile.displayName}</strong>: {comment.content}
+                    <button
+                      onClick={() => openProfile(comment.author.id)}
+                      style={{
+                        border: "none",
+                        background: "transparent",
+                        color: "#e2e8f0",
+                        fontWeight: 700,
+                        cursor: "pointer",
+                        padding: 0,
+                        marginRight: 6,
+                      }}
+                    >
+                      {comment.author.profile.displayName}
+                    </button>
+                    <span style={{ color: "#cbd5f5" }}>{comment.content}</span>
                   </div>
                 ))}
                 {token && (
@@ -495,6 +569,7 @@ export default function Community({ apiBase, token }) {
       )}
 
       <ProfilePreviewModal data={profilePreview} onClose={() => setProfilePreview(null)} />
+      <ImagePreviewModal src={imagePreview} onClose={() => setImagePreview("")} />
     </section>
   );
 }
